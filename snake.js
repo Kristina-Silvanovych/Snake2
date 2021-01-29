@@ -13,7 +13,7 @@ let i = 0;
 var PickColor = function (colors) {
   return colors[Math.floor(Math.random() * colors.length)];
 };
-var PickWord = function (word, i) {
+var PickWord = function (word) {
   return word[Math.floor(Math.random() * word.length)];
 };
 const directions = {
