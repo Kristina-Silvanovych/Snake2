@@ -2,9 +2,10 @@ const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
 const width = canvas.width;
 const height = canvas.height;
-const blockSize = 10;
+const blockSize = 15;
 const widthInBlocks = width / blockSize;
 const heightInBlocks = height / blockSize;
+var score = 0;
 var word = ["р", "и", "с", "о", "в", "а", "н", "и", "е"];
 var eatenWord = "";
 var colors = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Lime"];
@@ -13,9 +14,7 @@ var PickColor = function (colors) {
   return colors[Math.floor(Math.random() * colors.length)];
 };
 var PickWord = function (word, i) {
-  for (i; i < word.length; i++) {
-    return word[i];
-  }
+  return word[Math.floor(Math.random() * word.length)];
 };
 const directions = {
   37: "left",
@@ -27,16 +26,23 @@ const directions = {
 let intervalId;
 
 class Block {
-  constructor(col = 0, row = 0) {
+  constructor(col , row) {
     this.col = col;
     this.row = row;
   }
 
-  drawSquare(color) {
+  drawSquare(color, letter) {
     let x = this.col * blockSize;
     let y = this.row * blockSize;
     context.fillStyle = color;
     context.fillRect(x, y, blockSize, blockSize);
+    context.font = "12px Courier";
+        context.fillStyle = "Black";
+        context.fillText(
+          letter,
+          this.col * blockSize + blockSize / 7,
+          this.row * blockSize + blockSize / 8
+        );
   }
 
   drawCircle(color, letter) {
@@ -67,6 +73,7 @@ class Block {
     return this.col === otherBlock.col && this.row === otherBlock.row;
   }
 }
+var sampleBlock = new Block(10, 5);
 
 class Apple {
   constructor() {
@@ -84,21 +91,21 @@ class Apple {
     const randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
     this.block = new Block(randomCol, randomRow);
     this.color = PickColor(colors);
-    this.letter = PickWord(word, 1);
+    this.letter = PickWord(word);
   }
 }
 
 class Snake {
   constructor() {
-    this.segments = [new Block(7, 5), new Block(6, 5), new Block(5, 5)];
+    this.segments = [new Block(7, 5)];//, new Block(6, 5), new Block(5, 5)
     this.direction = "right";
     this.nextDirection = "right";
     this.color = PickColor(colors);
-    this.letter = "";
+    this.letters = ["!"];
   }
   draw = function () {
     for (var i = 0; i < this.segments.length; i++) {
-      this.segments[i].drawSquare(this.color);
+       this.segments[i].drawSquare(this.color, this.letters[i]);
     }
   };
   move = function (apple, game) {
@@ -124,15 +131,14 @@ class Snake {
     this.segments.unshift(newHead);
 
     if (newHead.equal(apple.block)) {
-      game.score++;
+      score++;
       eatenWord += apple.letter;
-      console.log(eatenWord);
       this.color = apple.color;
-      this.letter = apple.letter;
+      this.letters.push(apple.letter);
       apple.move();
-    } else {
-      this.segments.pop();
-    }
+      } else {
+        this.segments.pop();
+      }
   };
 
   checkCollision = function (head) {
@@ -186,7 +192,8 @@ class Game {
     context.fillStyle = "Black";
     context.textAlign = "left";
     context.textBaseline = "top";
-    context.fillText("Счет: " + this.score, blockSize, blockSize);
+    context.fillText("Счет: " + score, blockSize, blockSize);
+    context.fillText(eatenWord, blockSize, 3 * blockSize);
   };
 
   gameOver = function () {
@@ -199,7 +206,7 @@ class Game {
   };
 
   go = function () {
-    context.clearRect(0, 0, canvas.width, canvas.height);
+     context.clearRect(0, 0, canvas.width, canvas.height);
     this.drawScore();
     this.snake.move(this.apple, this);
     this.snake.draw();
