@@ -6,16 +6,19 @@ const blockSize = 15;
 const widthInBlocks = width / blockSize;
 const heightInBlocks = height / blockSize;
 var score = 0;
-var word = ["р", "и", "с", "о", "в", "а", "н", "и", "е"];
-var eatenWord = "";
+var words = ["рисование", "история", "стол", "оса", "ворона"];
 var colors = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Lime"];
 let i = 0;
 var PickColor = function (colors) {
   return colors[Math.floor(Math.random() * colors.length)];
 };
-var PickWord = function (word) {
-  return word[Math.floor(Math.random() * word.length)];
+var PickWord = function (words) {
+   let w = words[Math.floor(Math.random() * words.length)];
+   let w_next  = w.split("");
+   return w_next[0];
 };
+var eatenWord = PickWord(words); 
+
 const directions = {
   37: "left",
   38: "up",
@@ -79,8 +82,18 @@ class Apple {
   constructor() {
     this.block = new Block(10, 10);
     this.color = PickColor(colors);
-    this.letter = PickWord(word, 0);
+    this.letter = PickWord(words, 0);
   }
+
+  Apple(eatenWord) {
+    this.block = new Block(10, 10);
+    this.color = PickColor(colors);
+    this.letter = eatenWord; 
+    this.eatenWord = eatenWord;
+    this.counter = 0;
+    this.letter = this.eatenWord[this.counter];
+  }
+
 
   draw() {
     this.block.drawCircle(this.color, this.letter);
@@ -91,9 +104,17 @@ class Apple {
     const randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
     this.block = new Block(randomCol, randomRow);
     this.color = PickColor(colors);
-    this.letter = PickWord(word);
+    this.letter = PickWord(words);
+    this.counter++;
+    if (this.counter < this.word.length) {
+        this.letter = this.eatenWord[this.counter];
+    } else {
+        gameOver();
+    }
   }
 }
+
+var apple = new Apple(eatenWord);
 
 class Snake {
   constructor() {
@@ -203,6 +224,7 @@ class Game {
     context.textAlign = "center";
     context.textBaseline = "middle";
     context.fillText("Game over!", width / 2, height / 2);
+    drawScore();//
   };
 
   go = function () {
