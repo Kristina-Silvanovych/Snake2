@@ -2,31 +2,73 @@ const canvas = document.getElementById("canvas");
 const context = canvas.getContext("2d");
 const width = canvas.width;
 const height = canvas.height;
-const blockSize = 15;
+var score = 0;
+const blockSize = 20;
 const widthInBlocks = width / blockSize;
 const heightInBlocks = height / blockSize;
-var score = 0;
-var words = ["рисование", "история", "стол", "оса", "ворона"];
+var words = ["рисование", "воображение", "иллюстрация", "прокрастинация"];
 var colors = ["Red", "Orange", "Yellow", "Green", "Blue", "Purple", "Lime"];
-let i = 0;
-var PickColor = function (colors) {
+var PickRandom = function (colors) {
   return colors[Math.floor(Math.random() * colors.length)];
 };
-var PickWord = function (words) {
-   let w = words[Math.floor(Math.random() * words.length)];
-   let w_next  = w.split("");
-   return w_next[0];
-};
-var eatenWord = PickWord(words); 
+// var PickWord = function (words) {
+//    let w = words[Math.floor(Math.random() * words.length)];
+//    //let w_next  = w.split("");
+//    return w;
+//   // number++;
+// };
+var eatenWord = ""; 
+var word = PickRandom(words);
 
-const directions = {
+drawBorder = function () {
+    context.fillStyle = "Gray";
+    context.fillRect(0, 0, width, blockSize);
+    context.fillRect(0, height - blockSize, width, blockSize);
+    context.fillRect(0, 0, blockSize, height);
+    context.fillRect(width - blockSize, 0, blockSize, height);
+  };
+
+  var drawScore = function () {
+    context.font = "20px Courier";
+    context.fillStyle = "Black";
+    context.textAlign = "left";
+    context.textBaseline = "top";
+    context.fillText("Счет: " + score, blockSize, blockSize);
+    context.fillText(eatenWord, blockSize, 3 * blockSize);
+  };
+
+  var gameOver = function () {
+    clearInterval(this.intervalId);
+    context.font = "60px Courier";
+    context.fillStyle = "Black";
+    context.textAlign = "center";
+    context.textBaseline = "middle";
+    context.fillText("Game over!", width / 2, height / 2);
+    drawScore();//
+  };
+
+  var circle = function(x, y, radius, fillCircle = true) {
+    context.beginPath();
+    context.arc(x, y, radius, 0, Math.PI * 2, false);
+    if (fillCircle) {
+      context.fill();
+    } else {
+      context.stroke();
+    }
+  };
+
+  const directions = {
   37: "left",
   38: "up",
   39: "right",
   40: "down",
-};
-
-let intervalId;
+  }; 
+      addEventListener("keydown", function (event) {
+        var newDirection = directions[event.keyCode];
+        if (newDirection !== undefined) {
+          snake.setDirection(newDirection);
+        }
+      });  
 
 class Block {
   constructor(col , row) {
@@ -43,8 +85,8 @@ class Block {
         context.fillStyle = "Black";
         context.fillText(
           letter,
-          this.col * blockSize + blockSize / 7,
-          this.row * blockSize + blockSize / 8
+          this.col * blockSize + blockSize / 3,
+          this.row * blockSize + blockSize / 4
         );
   }
 
@@ -52,76 +94,29 @@ class Block {
     let centerX = this.col * blockSize + blockSize / 2;
     let centerY = this.row * blockSize + blockSize / 2;
     context.fillStyle = color;
-    this.circle(centerX, centerY, blockSize / 1.25, true);
+    circle(centerX, centerY, blockSize / 2, true);
     context.font = "12px Courier";
     context.fillStyle = "Black";
     context.fillText(
       letter,
-      this.col * blockSize + blockSize / 7,
-      this.row * blockSize + blockSize / 8
+      this.col * blockSize + blockSize / 3,
+      this.row * blockSize + blockSize / 4
     );
-  }
-
-  circle(x, y, radius, fillCircle = true) {
-    context.beginPath();
-    context.arc(x, y, radius, 0, Math.PI * 2, false);
-    if (fillCircle) {
-      context.fill();
-    } else {
-      context.stroke();
-    }
   }
 
   equal(otherBlock) {
     return this.col === otherBlock.col && this.row === otherBlock.row;
   }
 }
+
 var sampleBlock = new Block(10, 5);
-
-class Apple {
-  constructor() {
-    this.block = new Block(10, 10);
-    this.color = PickColor(colors);
-    this.letter = PickWord(words, 0);
-  }
-
-  Apple(eatenWord) {
-    this.block = new Block(10, 10);
-    this.color = PickColor(colors);
-    this.letter = eatenWord; 
-    this.eatenWord = eatenWord;
-    this.counter = 0;
-    this.letter = this.eatenWord[this.counter];
-  }
-
-
-  draw() {
-    this.block.drawCircle(this.color, this.letter);
-  }
-
-  move() {
-    const randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
-    const randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
-    this.block = new Block(randomCol, randomRow);
-    this.color = PickColor(colors);
-    this.letter = PickWord(words);
-    this.counter++;
-    if (this.counter < this.word.length) {
-        this.letter = this.eatenWord[this.counter];
-    } else {
-        gameOver();
-    }
-  }
-}
-
-var apple = new Apple(eatenWord);
 
 class Snake {
   constructor() {
     this.segments = [new Block(7, 5)];//, new Block(6, 5), new Block(5, 5)
     this.direction = "right";
     this.nextDirection = "right";
-    this.color = PickColor(colors);
+    this.color = PickRandom(colors);
     this.letters = ["!"];
   }
   draw = function () {
@@ -129,7 +124,7 @@ class Snake {
        this.segments[i].drawSquare(this.color, this.letters[i]);
     }
   };
-  move = function (apple, game) {
+  move = function () {
     let head = this.segments[0];
     let newHead;
     this.direction = this.nextDirection;
@@ -192,69 +187,55 @@ class Snake {
   };
 }
 
-class Game {
-  intervalId;
-  constructor() {
-    this.score = 0;
-    this.apple = new Apple();
-    this.snake = new Snake();
+class Apple {
+  constructor(word) {
+    this.block = new Block(10, 10);
+    this.color = PickRandom(colors);
+    //this.letter = eatenWord; 
+    this.word = word;
+    this.counter = 0;
+    this.letter = this.word[this.counter];
   }
 
-  drawBorder = function () {
-    context.fillStyle = "Gray";
-    context.fillRect(0, 0, width, blockSize);
-    context.fillRect(0, height - blockSize, width, blockSize);
-    context.fillRect(0, 0, blockSize, height);
-    context.fillRect(width - blockSize, 0, blockSize, height);
-  };
+  // Apple(eatenWord) {
+  //   this.block = new Block(10, 10);
+  //   this.color = PickColor(colors);
+  //   this.letter = eatenWord; 
+  //   this.eatenWord = eatenWord;
+  //   this.counter = 0;
+  //   this.letter = this.eatenWord[this.counter];
+  // }
 
-  drawScore = function () {
-    context.font = "20px Courier";
-    context.fillStyle = "Black";
-    context.textAlign = "left";
-    context.textBaseline = "top";
-    context.fillText("Счет: " + score, blockSize, blockSize);
-    context.fillText(eatenWord, blockSize, 3 * blockSize);
-  };
 
-  gameOver = function () {
-    clearInterval(this.intervalId);
-    context.font = "60px Courier";
-    context.fillStyle = "Black";
-    context.textAlign = "center";
-    context.textBaseline = "middle";
-    context.fillText("Game over!", width / 2, height / 2);
-    drawScore();//
-  };
+  draw() {
+    this.block.drawCircle(this.color, this.letter);
+  }
 
-  go = function () {
-     context.clearRect(0, 0, canvas.width, canvas.height);
-    this.drawScore();
-    this.snake.move(this.apple, this);
-    this.snake.draw();
-    this.apple.draw();
-    this.drawBorder();
-  };
-
-  start = function () {
-    this.intervalId = setInterval(this.go.bind(this), 200);
-    // Задаем обработчик события keydown
-    addEventListener("keydown", (event) => {
-      let newDirection = directions[event.keyCode];
-      if (newDirection !== undefined) {
-        this.snake.setDirection(newDirection);
-      }
-    });
-  };
+  move() {
+    const randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+    const randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+    this.block = new Block(randomCol, randomRow);
+    this.color = PickRandom(colors);
+    this.letter = PickRandom(words);
+    this.counter++;
+    if (this.counter < this.word.length) {
+        this.letter = this.word[this.counter];
+    } else {
+        gameOver();
+    }
+  }
 }
 
-let game = new Game();
-game.start();
-// let sampleBlock = new Block(5, 5);
-// sampleBlock.drawCircle();
+var snake = new Snake();
+var apple = new Apple(word);
 
-// let apple = new Apple();
-// apple.move();
-// apple.draw();
+var intervalId = setInterval(function () {
+        context.clearRect(0, 0, width, height);
+        drawScore();
+        snake.move();
+        snake.draw();
+        apple.draw();
+        drawBorder();
+      }, 300);
 
 
